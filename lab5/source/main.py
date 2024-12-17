@@ -10,16 +10,16 @@ def read_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
 
-    algorithm_type = int(lines[0].strip())  # 1 for Cohen-Sutherland, 2 for Cyrus-Beck
+    algorithm_type = int(lines[0].strip())
     n = int(lines[1].strip())
     
-    if algorithm_type == 1:  # Cohen-Sutherland
+    if algorithm_type == 1:
         segments = [list(map(float, line.strip().split())) for line in lines[2:n + 2]]
         clipping_window = list(map(float, lines[n + 2].strip().split()))
         return algorithm_type, segments, clipping_window, None
-    else:  # Cyrus-Beck
-        line = list(map(float, lines[2].strip().split()))  # Single line to clip
-        m = int(lines[3].strip())  # Number of vertices in clipping polygon
+    else:
+        line = list(map(float, lines[2].strip().split()))
+        m = int(lines[3].strip())
         clipping_polygon = [list(map(float, line.strip().split())) for line in lines[4:m + 4]]
         return algorithm_type, [line], None, clipping_polygon
 
@@ -30,18 +30,17 @@ def cyrus_beck_clip(line, clip_polygon):
     x1, y1, x2, y2 = line
     P1 = np.array([x1, y1])
     P2 = np.array([x2, y2])
-    D = P2 - P1  # Direction vector
+    D = P2 - P1 
 
     n = len(clip_polygon)
     normals = []
     
-    # Calculate normal vectors for each edge
     for i in range(n):
         edge_start = np.array(clip_polygon[i])
         edge_end = np.array(clip_polygon[(i + 1) % n])
         edge = edge_end - edge_start
-        normal = np.array([-edge[1], edge[0]])  # Perpendicular vector
-        normal = normal / np.linalg.norm(normal)  # Normalize
+        normal = np.array([-edge[1], edge[0]]) 
+        normal = normal / np.linalg.norm(normal) 
         normals.append(normal)
 
     t_enter = 0.0
@@ -54,16 +53,16 @@ def cyrus_beck_clip(line, clip_polygon):
         numerator = dot_product(normal, (edge_start - P1))
         denominator = dot_product(normal, D)
 
-        if denominator == 0:  # Line is parallel to this edge
-            if numerator < 0:  # Line is outside
+        if denominator == 0: 
+            if numerator < 0:  
                 return None
             continue
 
         t = numerator / denominator
 
-        if denominator > 0:  # Entering
+        if denominator > 0: 
             t_enter = max(t_enter, t)
-        else:  # Exiting
+        else:  
             t_exit = min(t_exit, t)
 
         if t_enter > t_exit:
@@ -72,14 +71,12 @@ def cyrus_beck_clip(line, clip_polygon):
     if t_enter > t_exit:
         return None
 
-    # Calculate clipped points
     clipped_start = P1 + t_enter * D
     clipped_end = P1 + t_exit * D
 
     return [clipped_start[0], clipped_start[1], clipped_end[0], clipped_end[1]]
 
 def cohen_sutherland_clip(line, window):
-    # ... (keep existing Cohen-Sutherland implementation)
     INSIDE = 0  # 0000
     LEFT = 1    # 0001
     RIGHT = 2   # 0010
